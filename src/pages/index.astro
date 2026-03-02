@@ -1,5 +1,4 @@
 ---
-// src/pages/index.astro
 ---
 <!doctype html>
 <html lang="en">
@@ -7,9 +6,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rocky Mountain Dental Implants</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; background:#f7fafc; color:#1f2937; }
+      .wrap { max-width: 920px; margin: 0 auto; padding: 36px 20px; }
+      .card { background:#fff; padding:22px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+      .btn { background:#1d4ed8; color:white; text-decoration:none; padding:10px 14px; border-radius:8px; display:inline-block; margin-right:10px; }
+    </style>
   </head>
   <body>
-    <h1>Welcome to Rocky Mountain Dental Implants</h1>
-    <p>Website under construction.</p>
+    <div class="wrap">
+      <div class="card">
+        <h1>Rocky Mountain Dental Implants</h1>
+        <p>Surgical guide planning support for partner labs and restoring doctors.</p>
+        <p>
+          <a class="btn" href="/services">View Surgical Guide Services + Pricing</a>
+          <a class="btn" href="mailto:info@rockymountaindentalimplants.com">Contact</a>
+        </p>
+      </div>
+    </div>
   </body>
 </html>
