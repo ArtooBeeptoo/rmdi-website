@@ -6,4 +6,8 @@ export default defineConfig({
   output: 'server',
   adapter: node({ mode: 'standalone' }),
   integrations: [tailwind()],
+  server: {
+    host: '0.0.0.0',
+    port: parseInt(process.env.PORT) || 4321,
+  },
 });
