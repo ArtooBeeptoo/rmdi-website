@@ -1,0 +1,130 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Layout from '../../components/Layout.astro';
+import Card from '../../components/Card.astro';
+import Button from '../../components/Button.astro';
+import Alert from '../../components/Alert.astro';
+import { getCaseByUploadToken } from '../../lib/db';
+
+export const prerender = false;
+
+const token = Astro.params.token ?? '';
+const foundCase = token ? await getCaseByUploadToken(token) : undefined;
+---
+
+<BaseLayout title="Upload Files | RMDI">
+  <Layout>
+    {!foundCase ? (
+      <Card class="space-y-4">
+        <h1 class="text-2xl font-bold text-secondary-900">Upload Link Invalid</h1>
+        <Alert type="error">This upload token is invalid or expired. Contact info@rockymountaindentalimplants.com.</Alert>
+      </Card>
+    ) : (
+      <div class="space-y-6">
+        <Card class="space-y-3">
+          <h1 class="text-2xl font-bold text-secondary-900">Upload Case Files</h1>
+          <p class="text-sm text-secondary-700">Step 2 of 2: upload de-identified CBCT and STL files.</p>
+          <div class="grid gap-3 rounded-md bg-secondary-50 p-4 text-sm sm:grid-cols-2">
+            <p><strong>Case ID:</strong> {foundCase.id}</p>
+            <p><strong>Doctor:</strong> Dr. {foundCase.doctorName}</p>
+            <p><strong>Teeth:</strong> #{foundCase.toothNumbers.join(', ')}</p>
+            <p><strong>Date Needed:</strong> {foundCase.dateNeeded}</p>
+          </div>
+        </Card>
+
+        <Alert type="warning">
+          Files must be de-identified. Remove patient name, date of birth, and any PHI before submitting.
+        </Alert>
+
+        <Card>
+          <div id="upload-alert" class="mb-4 hidden"></div>
+          <form id="upload-form" class="space-y-6">
+            <input type="hidden" name="token" value={token} />
+
+            <section class="space-y-3">
+              <h2 class="text-lg font-semibold text-secondary-900">CBCT Upload (DICOM)</h2>
+              <p class="text-sm text-secondary-700">Upload a .zip containing DICOM files or paste a secure shared link. For files over 500MB, use a shared link.</p>
+              <input name="cbctFile" type="file" accept=".zip,.dcm" class="block w-full text-sm" />
+              <input name="cbctLink" type="url" placeholder="Dropbox / Google Drive / OneDrive link" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+            </section>
+
+            <section class="space-y-3">
+              <h2 class="text-lg font-semibold text-secondary-900">STL Upload (Intraoral Scan)</h2>
+              <p class="text-sm text-secondary-700">Upload up to 100MB directly, or provide a shared link.</p>
+              <input name="stlFile" type="file" accept=".stl" class="block w-full text-sm" />
+              <input name="stlLink" type="url" placeholder="STL shared link" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+            </section>
+
+            <Button type="submit">Complete Upload</Button>
+          </form>
+        </Card>
+      </div>
+    )}
+  </Layout>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('upload-form');
+  const alertContainer = document.getElementById('upload-alert');
+
+  const setAlert = (type, message) => {
+    alertContainer.className = 'mb-4 rounded-md border px-4 py-3 text-sm';
+    alertContainer.classList.remove('hidden');
+    if (type === 'error') {
+      alertContainer.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
+    } else {
+      alertContainer.classList.add('border-green-200', 'bg-green-50', 'text-green-700');
+    }
+    alertContainer.textContent = message;
+  };
+
+  if (form) {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const payload = {
+        token: form.token.value,
+        cbctLink: form.cbctLink.value,
+        stlLink: form.stlLink.value,
+        cbctUploaded: form.cbctFile.files.length > 0,
+        stlUploaded: form.stlFile.files.length > 0,
+      };
+
+      if (!payload.cbctLink && !payload.cbctUploaded) {
+        setAlert('error', 'Provide a CBCT file or shared link.');
+        return;
+      }
+
+      if (!payload.stlLink && !payload.stlUploaded) {
+        setAlert('error', 'Provide an STL file or shared link.');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.set('token', payload.token);
+        formData.set('cbctLink', payload.cbctLink || '');
+        formData.set('stlLink', payload.stlLink || '');
+        if (form.cbctFile.files[0]) formData.set('cbctFile', form.cbctFile.files[0]);
+        if (form.stlFile.files[0]) formData.set('stlFile', form.stlFile.files[0]);
+
+        setAlert('success', 'Uploading files...');
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          setAlert('error', data.error || 'Upload failed.');
+          return;
+        }
+
+        setAlert('success', "Files received! We'll review and contact you for your scheduled consultation.");
+      } catch (error) {
+        setAlert('error', error instanceof Error ? error.message : 'Upload failed.');
+      }
+    });
+  }
+</script>

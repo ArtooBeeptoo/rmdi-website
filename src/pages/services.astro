@@ -1,78 +1,71 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Layout from '../components/Layout.astro';
+import Card from '../components/Card.astro';
+import Button from '../components/Button.astro';
+
 const pricing = [
-  { tier: 'Standard Planning', fee: '$100 / case', nobel: '$75 / case', notes: 'Single case, 48–72 hour turnaround' },
-  { tier: 'Volume Planning (10+ / month)', fee: '$85 / case', nobel: '$60 / case', notes: 'For active labs and multi-provider groups' },
-  { tier: 'Expedited Add-On (24 hour)', fee: '+$50', nobel: '+$40', notes: 'Rush fee added to selected base tier' },
+  { tier: 'Standard Planning', fee: '$100/case', nobel: '$75/case', turnaround: '48-72 hours' },
+  { tier: 'Volume Planning (10+/month)', fee: '$85/case', nobel: '$60/case', turnaround: '48-72 hours' },
+  { tier: 'Expedited Add-On', fee: '+$50', nobel: '+$40', turnaround: '24 hours' },
 ];
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Surgical Guide Planning Services | RMDI</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 0; background: #f7fafc; color: #1f2937; }
-      .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px; }
-      .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
-      h1,h2 { margin: 0 0 12px; }
-      table { width: 100%; border-collapse: collapse; }
-      th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e5e7eb; }
-      th { background: #eff6ff; }
-      .badge { display:inline-block; background:#dcfce7; color:#166534; padding:6px 10px; border-radius:999px; font-weight:700; }
-      .cta { background:#1d4ed8; color:#fff; text-decoration:none; padding:10px 14px; border-radius:8px; display:inline-block; }
-      .small { font-size: .92rem; color:#4b5563; }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="card">
-        <h1>Surgical Guide Planning Services</h1>
-        <p>Remote implant planning support for labs and restoring doctors. Built for real-world workflows: DICOM + STL intake, plan review, and STL handoff for guide fabrication.</p>
-      </div>
 
-      <div class="card">
-        <h2>Pricing</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Service Tier</th>
-              <th>Standard Fee</th>
-              <th>Nobel Customer Discount</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pricing.map((row) => (
-              <tr>
-                <td>{row.tier}</td>
-                <td>{row.fee}</td>
-                <td>{row.nobel}</td>
-                <td>{row.notes}</td>
+<BaseLayout title="RMDI Services">
+  <Layout>
+    <div class="space-y-6">
+      <Card class="space-y-3">
+        <h1 class="text-3xl font-bold text-secondary-900">Surgical Guide Planning Services</h1>
+        <p class="text-secondary-700">Planning support for Nobel, Straumann, Zimmer, BioHorizons, and all major implant systems.</p>
+      </Card>
+
+      <Card>
+        <h2 class="text-xl font-semibold text-secondary-900">Pricing</h2>
+        <div class="mt-4 overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-secondary-200 text-left text-secondary-600">
+                <th class="px-3 py-2 font-semibold">Tier</th>
+                <th class="px-3 py-2 font-semibold">Standard</th>
+                <th class="px-3 py-2 font-semibold">Nobel Discount</th>
+                <th class="px-3 py-2 font-semibold">Turnaround</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <p class="small" style="margin-top:10px;">Nobel customer discount applies to active Nobel accounts and approved partner labs.</p>
-      </div>
+            </thead>
+            <tbody>
+              {pricing.map((row) => (
+                <tr class="border-b border-secondary-100">
+                  <td class="px-3 py-2 font-medium text-secondary-900">{row.tier}</td>
+                  <td class="px-3 py-2">{row.fee}</td>
+                  <td class="px-3 py-2">{row.nobel}</td>
+                  <td class="px-3 py-2">{row.turnaround}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
-      <div class="card">
-        <h2>Pilot Offer for Current Nobel Territory Accounts</h2>
-        <p><span class="badge">$0 Planning Fee</span></p>
-        <p>For current Nobel accounts in Joe Casey’s active territory, planning services are currently provided at <strong>no charge</strong> during pilot testing and workflow validation.</p>
-        <p class="small">Guide manufacturing/fabrication costs are separate and handled by the lab.</p>
-      </div>
+      <section class="grid gap-6 md:grid-cols-2">
+        <Card class="space-y-3">
+          <h2 class="text-xl font-semibold text-secondary-900">Process</h2>
+          <ol class="list-inside list-decimal space-y-2 text-secondary-700">
+            <li>Submit case details and pick a 15-minute review slot.</li>
+            <li>Upload de-identified CBCT and STL files.</li>
+            <li>Receive planning output and consultation support.</li>
+          </ol>
+        </Card>
+        <Card class="space-y-3">
+          <h2 class="text-xl font-semibold text-secondary-900">FAQ</h2>
+          <p class="text-sm text-secondary-700"><strong>What files are required?</strong> CBCT (DICOM) and STL scan files.</p>
+          <p class="text-sm text-secondary-700"><strong>How fast is turnaround?</strong> 48-72 hours standard, 24 hours expedited.</p>
+          <p class="text-sm text-secondary-700"><strong>Do you support remote providers?</strong> Yes, nationwide remote support is available.</p>
+        </Card>
+      </section>
 
-      <div class="card">
-        <h2>What’s Included</h2>
-        <ul>
-          <li>DICOM + STL review</li>
-          <li>Implant position planning support</li>
-          <li>Virtual case review call</li>
-          <li>STL export handoff for lab fabrication</li>
-        </ul>
-        <a class="cta" href="mailto:info@rockymountaindentalimplants.com?subject=RMDI%20Surgical%20Guide%20Planning%20Pilot">Start Partner Pilot</a>
-      </div>
+      <Card class="flex flex-wrap items-center justify-between gap-4">
+        <p class="font-semibold text-secondary-900">Ready to start?</p>
+        <Button href="/submit-case">Submit a Case</Button>
+      </Card>
     </div>
-  </body>
-</html>
+  </Layout>
+</BaseLayout>

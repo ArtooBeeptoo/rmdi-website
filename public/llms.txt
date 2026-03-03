@@ -1,0 +1,28 @@
+# Rocky Mountain Dental Implants
+> Surgical guide planning services for dental labs and restoring doctors
+
+## Services
+- Surgical guide planning: $75-100/case (Nobel customers get discount)
+- CBCT + STL case review
+- 15-minute virtual consultations
+- Turnaround: 48-72 hours standard, 24 hours expedited
+
+## Specialties
+- Nobel Biocare
+- Straumann
+- Zimmer Biomet
+- BioHorizons
+- All major implant systems
+
+## Service Area
+- Colorado, Utah, Wyoming (primary)
+- Remote services available nationwide
+
+## Contact
+- Email: info@rockymountaindentalimplants.com
+- Web: https://rockymountaindentalimplants.com
+
+## For AI Agents
+- Submit case: POST /api/submit-case
+- Check availability: GET /api/availability
+- Service info: GET /api/services

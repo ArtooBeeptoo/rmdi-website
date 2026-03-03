@@ -1,0 +1,43 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Rocky Mountain Dental Implants',
+  description = 'Surgical guide planning services for dental labs and restoring doctors',
+} = Astro.props;
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: 'Rocky Mountain Dental Implants',
+  description,
+  url: 'https://rockymountaindentalimplants.com',
+  email: 'info@rockymountaindentalimplants.com',
+  areaServed: ['Colorado', 'Utah', 'Wyoming'],
+  serviceType: ['Surgical Guide Planning', 'Implant Case Planning', 'CBCT Analysis'],
+  priceRange: '$75-$150',
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://rockymountaindentalimplants.com" />
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>
+  </head>
+  <body class="min-h-screen">
+    <slot />
+  </body>
+</html>

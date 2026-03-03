@@ -1,0 +1,240 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Layout from '../components/Layout.astro';
+import Card from '../components/Card.astro';
+import FormField from '../components/FormField.astro';
+import Button from '../components/Button.astro';
+
+const teeth = Array.from({ length: 32 }, (_, i) => i + 1);
+const implantSystems = ['Nobel', 'Straumann', 'Zimmer', 'BioHorizons', 'Other'];
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+const minDate = tomorrow.toISOString().slice(0, 10);
+---
+
+<BaseLayout title="Submit Case | RMDI">
+  <Layout>
+    <Card>
+      <h1 class="text-2xl font-bold text-secondary-900">Submit a Case</h1>
+      <p class="mt-2 text-sm text-secondary-700">Step 1 of 2: provide case details and select your review slot.</p>
+
+      <div id="form-alert" class="mt-4 hidden rounded-md border px-4 py-3 text-sm"></div>
+
+      <form id="case-form" class="mt-6 space-y-6">
+        <section class="grid gap-4 md:grid-cols-2">
+          <FormField id="doctorName" label="Doctor name" required>
+            <input id="doctorName" name="doctorName" required minlength="2" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+          </FormField>
+          <FormField id="practiceName" label="Practice name" required>
+            <input id="practiceName" name="practiceName" required minlength="2" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+          </FormField>
+          <FormField id="email" label="Email" required>
+            <input id="email" name="email" type="email" required class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+          </FormField>
+          <FormField id="phone" label="Phone">
+            <input id="phone" name="phone" type="tel" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+          </FormField>
+        </section>
+
+        <section class="space-y-4">
+          <FormField id="toothNumbers" label="Tooth number(s)" required hint="Select all that apply (Universal 1-32)">
+            <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
+              {teeth.map((tooth) => (
+                <label class="flex items-center gap-1 rounded border border-secondary-200 px-2 py-1 text-sm">
+                  <input type="checkbox" name="toothNumbers" value={tooth} class="h-4 w-4" />
+                  {tooth}
+                </label>
+              ))}
+            </div>
+          </FormField>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <FormField id="implantSystem" label="Implant system" required>
+              <select id="implantSystem" name="implantSystem" required class="w-full rounded-md border border-secondary-300 px-3 py-2">
+                <option value="">Select system</option>
+                {implantSystems.map((system) => <option value={system}>{system}</option>)}
+              </select>
+            </FormField>
+            <FormField id="dateNeeded" label="Date needed by" required>
+              <input id="dateNeeded" name="dateNeeded" type="date" required min={minDate} class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+            </FormField>
+          </div>
+        </section>
+
+        <section class="space-y-3">
+          <h2 class="text-sm font-semibold text-secondary-800">Preferred review slot <span class="text-red-600">*</span></h2>
+          <input id="reviewDatetime" name="reviewDatetime" type="hidden" required />
+          <div id="availability" class="rounded-md border border-secondary-200 p-4 text-sm text-secondary-600">Loading availability...</div>
+        </section>
+
+        <section class="space-y-3">
+          <h2 class="text-sm font-semibold text-secondary-800">Lab delivery <span class="text-red-600">*</span></h2>
+
+          <label class="block rounded-md border border-secondary-200 p-3 text-sm">
+            <input type="radio" name="labDeliveryOption" value="self" checked />
+            <span class="ml-2">Send STL back to me for local production</span>
+          </label>
+
+          <label class="block rounded-md border border-secondary-200 p-3 text-sm">
+            <input type="radio" name="labDeliveryOption" value="partner" />
+            <span class="ml-2">Send to partner lab</span>
+            <select id="partnerLab" name="partnerLab" class="mt-3 hidden w-full rounded-md border border-secondary-300 px-3 py-2">
+              <option value="">Choose partner lab</option>
+              <option value="newcraft">Newcraft Dental Arts</option>
+              <option value="bioaesthetic">Bio Aesthetic Dental Studio</option>
+            </select>
+          </label>
+
+          <label class="block rounded-md border border-secondary-200 p-3 text-sm">
+            <input type="radio" name="labDeliveryOption" value="custom" />
+            <span class="ml-2">Send to my lab</span>
+            <div id="custom-lab-fields" class="mt-3 hidden grid gap-3 md:grid-cols-2">
+              <input name="labName" placeholder="Lab name" class="rounded-md border border-secondary-300 px-3 py-2" />
+              <input name="labEmail" type="email" placeholder="Lab email" class="rounded-md border border-secondary-300 px-3 py-2" />
+            </div>
+          </label>
+        </section>
+
+        <FormField id="notes" label="Notes" hint="Optional (max 1000 characters)">
+          <textarea id="notes" name="notes" maxlength="1000" rows="4" class="w-full rounded-md border border-secondary-300 px-3 py-2"></textarea>
+        </FormField>
+
+        <label class="flex items-start gap-2 rounded-md border border-secondary-200 p-3 text-sm">
+          <input id="disclaimerConfirmed" name="disclaimerConfirmed" type="checkbox" required class="mt-0.5 h-4 w-4" />
+          <span>I confirm these files have been de-identified and contain no patient name, date of birth, or other identifying information.</span>
+        </label>
+
+        <Button type="submit" class="w-full sm:w-auto">Submit Case</Button>
+      </form>
+    </Card>
+  </Layout>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('case-form');
+  const alertBox = document.getElementById('form-alert');
+  const availabilityEl = document.getElementById('availability');
+  const reviewInput = document.getElementById('reviewDatetime');
+  const partnerLabSelect = document.getElementById('partnerLab');
+  const customLabFields = document.getElementById('custom-lab-fields');
+
+  const showAlert = (type, message) => {
+    alertBox.classList.remove('hidden', 'border-red-200', 'bg-red-50', 'text-red-700', 'border-green-200', 'bg-green-50', 'text-green-700');
+    if (type === 'error') {
+      alertBox.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
+    } else {
+      alertBox.classList.add('border-green-200', 'bg-green-50', 'text-green-700');
+    }
+    alertBox.textContent = message;
+  };
+
+  const renderAvailability = (slotsByDay) => {
+    const days = Object.keys(slotsByDay).sort();
+    if (days.length === 0) {
+      availabilityEl.textContent = 'No available slots in the next 14 days.';
+      return;
+    }
+
+    availabilityEl.innerHTML = '';
+
+    days.forEach((day) => {
+      const slots = slotsByDay[day];
+      if (!slots.length) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mb-4';
+
+      const heading = document.createElement('p');
+      heading.className = 'mb-2 font-semibold text-secondary-800';
+      heading.textContent = slots[0].dayLabel;
+      wrapper.appendChild(heading);
+
+      const list = document.createElement('div');
+      list.className = 'flex flex-wrap gap-2';
+
+      slots.forEach((slot) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'rounded border border-secondary-300 px-3 py-1 text-sm hover:border-primary hover:text-primary';
+        button.textContent = slot.label;
+        button.addEventListener('click', () => {
+          document.querySelectorAll('[data-slot]').forEach((el) => el.classList.remove('border-primary', 'bg-blue-50', 'text-primary'));
+          button.classList.add('border-primary', 'bg-blue-50', 'text-primary');
+          reviewInput.value = slot.start;
+        });
+        button.dataset.slot = slot.start;
+        list.appendChild(button);
+      });
+
+      wrapper.appendChild(list);
+      availabilityEl.appendChild(wrapper);
+    });
+  };
+
+  const loadAvailability = async () => {
+    try {
+      const response = await fetch('/api/availability');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to load availability');
+      renderAvailability(data.slotsByDay || {});
+    } catch (error) {
+      availabilityEl.textContent = error instanceof Error ? error.message : 'Failed to load availability.';
+    }
+  };
+
+  document.querySelectorAll('input[name="labDeliveryOption"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      const value = document.querySelector('input[name="labDeliveryOption"]:checked')?.value;
+      partnerLabSelect.classList.toggle('hidden', value !== 'partner');
+      customLabFields.classList.toggle('hidden', value !== 'custom');
+    });
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const selectedTeeth = Array.from(document.querySelectorAll('input[name="toothNumbers"]:checked')).map((el) => Number(el.value));
+    const labDeliveryOption = document.querySelector('input[name="labDeliveryOption"]:checked')?.value;
+
+    const payload = {
+      doctorName: form.doctorName.value,
+      practiceName: form.practiceName.value,
+      email: form.email.value,
+      phone: form.phone.value,
+      toothNumbers: selectedTeeth,
+      implantSystem: form.implantSystem.value,
+      dateNeeded: form.dateNeeded.value,
+      reviewDatetime: form.reviewDatetime.value,
+      labDeliveryOption,
+      partnerLab: form.partnerLab?.value,
+      labName: form.labName?.value,
+      labEmail: form.labEmail?.value,
+      notes: form.notes.value,
+      disclaimerConfirmed: form.disclaimerConfirmed.checked,
+    };
+
+    try {
+      const response = await fetch('/api/submit-case', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = Array.isArray(data.errors) ? data.errors.join(' ') : data.error || 'Submission failed.';
+        showAlert('error', message);
+        return;
+      }
+
+      showAlert('success', `Case submitted successfully. Case ID: ${data.caseId}`);
+      setTimeout(() => {
+        window.location.href = `/upload/${data.uploadToken}`;
+      }, 900);
+    } catch (error) {
+      showAlert('error', error instanceof Error ? error.message : 'Submission failed.');
+    }
+  });
+
+  loadAvailability();
+</script>

@@ -1,28 +1,30 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Layout from '../components/Layout.astro';
+import Card from '../components/Card.astro';
+import Button from '../components/Button.astro';
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rocky Mountain Dental Implants</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 0; background:#f7fafc; color:#1f2937; }
-      .wrap { max-width: 920px; margin: 0 auto; padding: 36px 20px; }
-      .card { background:#fff; padding:22px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
-      .btn { background:#1d4ed8; color:white; text-decoration:none; padding:10px 14px; border-radius:8px; display:inline-block; margin-right:10px; }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="card">
-        <h1>Rocky Mountain Dental Implants</h1>
-        <p>Surgical guide planning support for partner labs and restoring doctors.</p>
-        <p>
-          <a class="btn" href="/services">View Surgical Guide Services + Pricing</a>
-          <a class="btn" href="mailto:info@rockymountaindentalimplants.com">Contact</a>
-        </p>
-      </div>
-    </div>
-  </body>
-</html>
+
+<BaseLayout title="Rocky Mountain Dental Implants | Surgical Guide Planning">
+  <Layout>
+    <section class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <Card class="space-y-5">
+        <p class="inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-primary">AI-Powered Surgical Guide Planning</p>
+        <h1 class="text-3xl font-bold text-secondary-900 sm:text-4xl">Fast, affordable implant planning for restoring doctors and labs.</h1>
+        <p class="text-secondary-700">Submit DICOM + STL cases, schedule a 15-minute review, and get planning support in 48-72 hours.</p>
+        <div class="flex flex-wrap gap-3">
+          <Button href="/submit-case">Submit a Case</Button>
+          <Button href="/services" variant="secondary">View Services</Button>
+        </div>
+      </Card>
+      <Card>
+        <h2 class="text-xl font-semibold text-secondary-900">Trust Signals</h2>
+        <ul class="mt-4 space-y-3 text-secondary-700">
+          <li class="rounded-md bg-secondary-50 p-3">Nobel Biocare Expert workflow support</li>
+          <li class="rounded-md bg-secondary-50 p-3">48-72 hour standard turnaround</li>
+          <li class="rounded-md bg-secondary-50 p-3">15-minute virtual case consultation</li>
+        </ul>
+      </Card>
+    </section>
+  </Layout>
+</BaseLayout>
