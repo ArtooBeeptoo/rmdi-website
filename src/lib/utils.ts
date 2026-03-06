@@ -21,7 +21,7 @@ export interface IntakePayload {
   disclaimerConfirmed: boolean;
 }
 
-const IMPLANT_SYSTEMS = new Set(['Nobel', 'Straumann', 'Zimmer', 'BioHorizons', 'Other']);
+const IMPLANT_SYSTEMS = new Set(['Nobel Biocare', 'Straumann', 'Zimmer Biomet', 'BioHorizons', 'Dentsply Sirona', 'Neodent', 'Other']);
 const PARTNER_LABS = new Set(['newcraft', 'bioaesthetic']);
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

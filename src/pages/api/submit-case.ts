@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { bookReviewSlot, getAvailability } from '../../lib/calendar';
+import { bookReviewSlot } from '../../lib/calendar';
 import { insertCase, getNextSequence } from '../../lib/db';
 import { sendDoctorConfirmation, sendRmdiNewCaseAlert } from '../../lib/email';
 import {
@@ -24,21 +24,8 @@ export const POST: APIRoute = async ({ request, url }) => {
 
     const data = validation.data;
 
-    const availability = await getAvailability(14);
-    const availableStarts = new Set(
-      Object.values(availability.slotsByDay)
-        .flat()
-        .map((slot) => slot.start),
-    );
-    if (!availableStarts.has(data.reviewDatetime)) {
-      return new Response(
-        JSON.stringify({ errors: ['Selected review slot is no longer available. Please choose another.'] }),
-        {
-          status: 409,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
-    }
+    // Skip calendar availability check - using simple datetime picker for now
+    // Will add live availability checking in Phase 2
 
     const lastName = getLastName(data.doctorName);
     const yymmdd = formatYYMMDD(new Date());
