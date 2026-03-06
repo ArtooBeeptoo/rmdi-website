@@ -26,21 +26,35 @@ interface AvailabilityResponse {
   slotsByDay: Record<string, AvailabilitySlot[]>;
 }
 
-async function readTokenFile(): Promise<TokenFile> {
-  const filePath = path.join(os.homedir(), '.secrets', 'google-token.json');
-  const raw = await readFile(filePath, 'utf-8');
-  const parsed = JSON.parse(raw) as Record<string, unknown>;
+async function getCredentials(): Promise<TokenFile> {
+  // Check env vars first (for Render deployment)
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN) {
+    return {
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+      token_uri: 'https://oauth2.googleapis.com/token',
+    };
+  }
 
-  return {
-    client_id: (parsed.client_id as string) || process.env.GOOGLE_CLIENT_ID,
-    client_secret: (parsed.client_secret as string) || process.env.GOOGLE_CLIENT_SECRET,
-    refresh_token: (parsed.refresh_token as string) || process.env.GOOGLE_REFRESH_TOKEN,
-    token_uri: (parsed.token_uri as string) || 'https://oauth2.googleapis.com/token',
-  };
+  // Fall back to file (for local dev)
+  try {
+    const filePath = path.join(os.homedir(), '.secrets', 'google-token.json');
+    const raw = await readFile(filePath, 'utf-8');
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      client_id: parsed.client_id as string,
+      client_secret: parsed.client_secret as string,
+      refresh_token: parsed.refresh_token as string,
+      token_uri: (parsed.token_uri as string) || 'https://oauth2.googleapis.com/token',
+    };
+  } catch {
+    throw new Error('Missing Google OAuth credentials. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN env vars.');
+  }
 }
 
 async function getOAuthClient() {
-  const creds = await readTokenFile();
+  const creds = await getCredentials();
 
   if (!creds.client_id || !creds.client_secret || !creds.refresh_token) {
     throw new Error('Missing Google OAuth credentials in ~/.secrets/google-token.json or env vars.');

@@ -14,24 +14,35 @@ interface TokenFile {
   refresh_token?: string;
 }
 
-async function readTokenFile(): Promise<TokenFile> {
-  const filePath = path.join(os.homedir(), '.secrets', 'google-token.json');
-  const raw = await readFile(filePath, 'utf-8');
-  return JSON.parse(raw) as TokenFile;
+async function getCredentials(): Promise<TokenFile> {
+  // Check env vars first (for Render deployment)
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN) {
+    return {
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+    };
+  }
+
+  // Fall back to file (for local dev)
+  try {
+    const filePath = path.join(os.homedir(), '.secrets', 'google-token.json');
+    const raw = await readFile(filePath, 'utf-8');
+    return JSON.parse(raw) as TokenFile;
+  } catch {
+    throw new Error('Missing Gmail OAuth credentials. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN env vars.');
+  }
 }
 
 async function getOAuthClient() {
-  const token = await readTokenFile();
-  const clientId = token.client_id || process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = token.client_secret || process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = token.refresh_token || process.env.GOOGLE_REFRESH_TOKEN;
+  const creds = await getCredentials();
 
-  if (!clientId || !clientSecret || !refreshToken) {
+  if (!creds.client_id || !creds.client_secret || !creds.refresh_token) {
     throw new Error('Missing Gmail OAuth credentials.');
   }
 
-  const client = new google.auth.OAuth2(clientId, clientSecret, 'http://localhost');
-  client.setCredentials({ refresh_token: refreshToken });
+  const client = new google.auth.OAuth2(creds.client_id, creds.client_secret, 'http://localhost');
+  client.setCredentials({ refresh_token: creds.refresh_token });
   return client;
 }
 
