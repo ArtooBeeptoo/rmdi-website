@@ -75,57 +75,10 @@ const minDate = tomorrow.toISOString().slice(0, 10);
         </section>
 
         <section class="space-y-3">
-          <h2 class="text-sm font-semibold text-secondary-800">Preferred review date & time <span class="text-red-600">*</span></h2>
-          <p class="text-xs text-secondary-500">Select your preferred 15-minute review slot. We'll confirm availability via email.</p>
-          <div class="grid gap-4 md:grid-cols-2">
-            <div>
-              <label for="reviewDate" class="block text-sm font-medium text-secondary-700 mb-1">Date</label>
-              <input id="reviewDate" name="reviewDate" type="date" required min={minDate} class="w-full rounded-md border border-secondary-300 px-3 py-2" />
-            </div>
-            <div>
-              <label for="reviewTime" class="block text-sm font-medium text-secondary-700 mb-1">Time (Mountain Time)</label>
-              <select id="reviewTime" name="reviewTime" required class="w-full rounded-md border border-secondary-300 px-3 py-2">
-                <option value="">Select time</option>
-                <option value="08:00">8:00 AM</option>
-                <option value="08:15">8:15 AM</option>
-                <option value="08:30">8:30 AM</option>
-                <option value="08:45">8:45 AM</option>
-                <option value="09:00">9:00 AM</option>
-                <option value="09:15">9:15 AM</option>
-                <option value="09:30">9:30 AM</option>
-                <option value="09:45">9:45 AM</option>
-                <option value="10:00">10:00 AM</option>
-                <option value="10:15">10:15 AM</option>
-                <option value="10:30">10:30 AM</option>
-                <option value="10:45">10:45 AM</option>
-                <option value="11:00">11:00 AM</option>
-                <option value="11:15">11:15 AM</option>
-                <option value="11:30">11:30 AM</option>
-                <option value="11:45">11:45 AM</option>
-                <option value="12:00">12:00 PM</option>
-                <option value="12:15">12:15 PM</option>
-                <option value="12:30">12:30 PM</option>
-                <option value="12:45">12:45 PM</option>
-                <option value="13:00">1:00 PM</option>
-                <option value="13:15">1:15 PM</option>
-                <option value="13:30">1:30 PM</option>
-                <option value="13:45">1:45 PM</option>
-                <option value="14:00">2:00 PM</option>
-                <option value="14:15">2:15 PM</option>
-                <option value="14:30">2:30 PM</option>
-                <option value="14:45">2:45 PM</option>
-                <option value="15:00">3:00 PM</option>
-                <option value="15:15">3:15 PM</option>
-                <option value="15:30">3:30 PM</option>
-                <option value="15:45">3:45 PM</option>
-                <option value="16:00">4:00 PM</option>
-                <option value="16:15">4:15 PM</option>
-                <option value="16:30">4:30 PM</option>
-                <option value="16:45">4:45 PM</option>
-                <option value="17:00">5:00 PM</option>
-              </select>
-            </div>
-          </div>
+          <h2 class="text-sm font-semibold text-secondary-800">Preferred review slot <span class="text-red-600">*</span></h2>
+          <p class="text-xs text-secondary-500">Select an available 15-minute review slot (8:15am - 6:00pm MT, weekdays only).</p>
+          <input id="reviewDatetime" name="reviewDatetime" type="hidden" required />
+          <div id="availability" class="rounded-md border border-secondary-200 p-4 text-sm text-secondary-600 max-h-64 overflow-y-auto">Loading availability...</div>
         </section>
 
         <section class="space-y-3">
@@ -172,12 +125,14 @@ const minDate = tomorrow.toISOString().slice(0, 10);
 </BaseLayout>
 
 <script>
-  const form = document.getElementById('case-form');
-  const alertBox = document.getElementById('form-alert');
-  const partnerLabSelect = document.getElementById('partnerLab');
-  const customLabFields = document.getElementById('custom-lab-fields');
+  const form = document.getElementById('case-form') as HTMLFormElement;
+  const alertBox = document.getElementById('form-alert') as HTMLElement;
+  const availabilityEl = document.getElementById('availability') as HTMLElement;
+  const reviewInput = document.getElementById('reviewDatetime') as HTMLInputElement;
+  const partnerLabSelect = document.getElementById('partnerLab') as HTMLSelectElement;
+  const customLabFields = document.getElementById('custom-lab-fields') as HTMLElement;
 
-  const showAlert = (type, message) => {
+  const showAlert = (type: string, message: string) => {
     alertBox.classList.remove('hidden', 'border-red-200', 'bg-red-50', 'text-red-700', 'border-green-200', 'bg-green-50', 'text-green-700');
     if (type === 'error') {
       alertBox.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
@@ -187,9 +142,70 @@ const minDate = tomorrow.toISOString().slice(0, 10);
     alertBox.textContent = message;
   };
 
+  interface AvailabilitySlot {
+    start: string;
+    end: string;
+    label: string;
+    dayLabel: string;
+  }
+
+  const renderAvailability = (slotsByDay: Record<string, AvailabilitySlot[]>) => {
+    const days = Object.keys(slotsByDay).sort();
+    if (days.length === 0) {
+      availabilityEl.textContent = 'No available slots in the next 14 days.';
+      return;
+    }
+
+    availabilityEl.innerHTML = '';
+
+    days.forEach((day) => {
+      const slots = slotsByDay[day];
+      if (!slots.length) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mb-4';
+
+      const heading = document.createElement('p');
+      heading.className = 'mb-2 font-semibold text-secondary-800';
+      heading.textContent = slots[0].dayLabel;
+      wrapper.appendChild(heading);
+
+      const list = document.createElement('div');
+      list.className = 'flex flex-wrap gap-2';
+
+      slots.forEach((slot) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'rounded border border-secondary-300 px-3 py-1 text-sm hover:border-primary hover:text-primary transition-colors';
+        button.textContent = slot.label;
+        button.addEventListener('click', () => {
+          document.querySelectorAll('[data-slot]').forEach((el) => el.classList.remove('border-primary', 'bg-blue-50', 'text-primary'));
+          button.classList.add('border-primary', 'bg-blue-50', 'text-primary');
+          reviewInput.value = slot.start;
+        });
+        button.dataset.slot = slot.start;
+        list.appendChild(button);
+      });
+
+      wrapper.appendChild(list);
+      availabilityEl.appendChild(wrapper);
+    });
+  };
+
+  const loadAvailability = async () => {
+    try {
+      const response = await fetch('/api/availability');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to load availability');
+      renderAvailability(data.slotsByDay || {});
+    } catch (error) {
+      availabilityEl.textContent = error instanceof Error ? error.message : 'Unable to fetch availability. Please try again.';
+    }
+  };
+
   document.querySelectorAll('input[name="labDeliveryOption"]').forEach((radio) => {
     radio.addEventListener('change', () => {
-      const value = document.querySelector('input[name="labDeliveryOption"]:checked')?.value;
+      const value = (document.querySelector('input[name="labDeliveryOption"]:checked') as HTMLInputElement)?.value;
       partnerLabSelect.classList.toggle('hidden', value !== 'partner');
       customLabFields.classList.toggle('hidden', value !== 'custom');
     });
@@ -198,32 +214,29 @@ const minDate = tomorrow.toISOString().slice(0, 10);
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const selectedTeeth = Array.from(document.querySelectorAll('input[name="toothNumbers"]:checked')).map((el) => Number(el.value));
-    const labDeliveryOption = document.querySelector('input[name="labDeliveryOption"]:checked')?.value;
+    const selectedTeeth = Array.from(document.querySelectorAll('input[name="toothNumbers"]:checked')).map((el) => Number((el as HTMLInputElement).value));
+    const labDeliveryOption = (document.querySelector('input[name="labDeliveryOption"]:checked') as HTMLInputElement)?.value;
 
-    // Combine date and time into ISO datetime
-    const reviewDate = form.reviewDate.value;
-    const reviewTime = form.reviewTime.value;
-    let reviewDatetime = '';
-    if (reviewDate && reviewTime) {
-      reviewDatetime = `${reviewDate}T${reviewTime}:00`;
+    if (!reviewInput.value) {
+      showAlert('error', 'Please select a review slot.');
+      return;
     }
 
     const payload = {
-      doctorName: form.doctorName.value,
-      practiceName: form.practiceName.value,
-      email: form.email.value,
-      phone: form.phone.value,
+      doctorName: (form.elements.namedItem('doctorName') as HTMLInputElement).value,
+      practiceName: (form.elements.namedItem('practiceName') as HTMLInputElement).value,
+      email: (form.elements.namedItem('email') as HTMLInputElement).value,
+      phone: (form.elements.namedItem('phone') as HTMLInputElement).value,
       toothNumbers: selectedTeeth,
-      implantSystem: form.implantSystem.value,
-      dateNeeded: form.dateNeeded.value,
-      reviewDatetime,
+      implantSystem: (form.elements.namedItem('implantSystem') as HTMLSelectElement).value,
+      dateNeeded: (form.elements.namedItem('dateNeeded') as HTMLInputElement).value,
+      reviewDatetime: reviewInput.value,
       labDeliveryOption,
-      partnerLab: form.partnerLab?.value,
-      labName: form.labName?.value,
-      labEmail: form.labEmail?.value,
-      notes: form.notes.value,
-      disclaimerConfirmed: form.disclaimerConfirmed.checked,
+      partnerLab: partnerLabSelect?.value,
+      labName: (form.elements.namedItem('labName') as HTMLInputElement)?.value,
+      labEmail: (form.elements.namedItem('labEmail') as HTMLInputElement)?.value,
+      notes: (form.elements.namedItem('notes') as HTMLTextAreaElement).value,
+      disclaimerConfirmed: (form.elements.namedItem('disclaimerConfirmed') as HTMLInputElement).checked,
     };
 
     try {
@@ -248,4 +261,6 @@ const minDate = tomorrow.toISOString().slice(0, 10);
       showAlert('error', error instanceof Error ? error.message : 'Submission failed.');
     }
   });
+
+  loadAvailability();
 </script>

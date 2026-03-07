@@ -108,6 +108,12 @@ function toDayLabel(date: Date): string {
   }).format(date);
 }
 
+// Business hours: 8:15am - 6:00pm MT
+const BUSINESS_START_HOUR = 8;
+const BUSINESS_START_MINUTE = 15;
+const BUSINESS_END_HOUR = 18; // 6pm
+const BUFFER_MINUTES = 15; // Buffer before/after meetings
+
 export async function getAvailability(nextDays = 14): Promise<AvailabilityResponse> {
   const auth = await getOAuthClient();
   const calendar = google.calendar({ version: 'v3', auth });
@@ -126,6 +132,18 @@ export async function getAvailability(nextDays = 14): Promise<AvailabilityRespon
   });
 
   const busyBlocks = freeBusy.data.calendars?.[CALENDAR_ID]?.busy ?? [];
+  
+  // Expand busy blocks with 15-min buffer before and after
+  const bufferedBusyBlocks = busyBlocks.map((block) => {
+    const blockStart = new Date(block.start ?? '');
+    const blockEnd = new Date(block.end ?? '');
+    // Add buffer before
+    blockStart.setMinutes(blockStart.getMinutes() - BUFFER_MINUTES);
+    // Add buffer after
+    blockEnd.setMinutes(blockEnd.getMinutes() + BUFFER_MINUTES);
+    return { start: blockStart, end: blockEnd };
+  });
+
   const slotsByDay: Record<string, AvailabilitySlot[]> = {};
 
   for (let dayOffset = 0; dayOffset < nextDays; dayOffset += 1) {
@@ -134,21 +152,27 @@ export async function getAvailability(nextDays = 14): Promise<AvailabilityRespon
     day.setDate(day.getDate() + dayOffset);
 
     const weekday = day.getDay();
-    if (weekday === 0 || weekday === 6) continue;
+    if (weekday === 0 || weekday === 6) continue; // Skip weekends
 
-    for (let hour = 8; hour < 17; hour += 1) {
+    // Generate slots from 8:15am to 5:45pm (last slot ends at 6pm)
+    for (let hour = BUSINESS_START_HOUR; hour < BUSINESS_END_HOUR; hour += 1) {
       for (let minute = 0; minute < 60; minute += 15) {
+        // Skip slots before 8:15am
+        if (hour === BUSINESS_START_HOUR && minute < BUSINESS_START_MINUTE) continue;
+        
         const slotStart = new Date(day);
         slotStart.setHours(hour, minute, 0, 0);
         if (slotStart <= now) continue;
 
         const slotEnd = new Date(slotStart);
         slotEnd.setMinutes(slotEnd.getMinutes() + 15);
+        
+        // Don't allow slots that end after 6pm
+        if (slotEnd.getHours() >= BUSINESS_END_HOUR && slotEnd.getMinutes() > 0) continue;
 
-        const isBusy = busyBlocks.some((block) => {
-          const blockStart = new Date(block.start ?? '');
-          const blockEnd = new Date(block.end ?? '');
-          return overlaps(slotStart, slotEnd, blockStart, blockEnd);
+        // Check against buffered busy blocks
+        const isBusy = bufferedBusyBlocks.some((block) => {
+          return overlaps(slotStart, slotEnd, block.start, block.end);
         });
 
         if (isBusy) continue;
