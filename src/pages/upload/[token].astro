@@ -45,14 +45,14 @@ const foundCase = token ? await getCaseByUploadToken(token) : undefined;
               <h2 class="text-lg font-semibold text-secondary-900">CBCT Upload (DICOM)</h2>
               <p class="text-sm text-secondary-700">Upload a .zip containing DICOM files or paste a secure shared link. For files over 500MB, use a shared link.</p>
               <input name="cbctFile" type="file" accept=".zip,.dcm" class="block w-full text-sm" />
-              <input name="cbctLink" type="url" placeholder="Dropbox / Google Drive / OneDrive link" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+              <input name="cbctLink" type="text" placeholder="Dropbox / Google Drive / OneDrive link" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
             </section>
 
             <section class="space-y-3">
               <h2 class="text-lg font-semibold text-secondary-900">STL Upload (Intraoral Scan)</h2>
               <p class="text-sm text-secondary-700">Upload up to 100MB directly, or provide a shared link.</p>
               <input name="stlFile" type="file" accept=".stl" class="block w-full text-sm" />
-              <input name="stlLink" type="url" placeholder="STL shared link" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
+              <input name="stlLink" type="text" placeholder="STL shared link" class="w-full rounded-md border border-secondary-300 px-3 py-2" />
             </section>
 
             <Button type="submit">Complete Upload</Button>
