@@ -114,6 +114,28 @@ const BUSINESS_START_MINUTE = 15;
 const BUSINESS_END_HOUR = 18; // 6pm
 const BUFFER_MINUTES = 15; // Buffer before/after meetings
 
+// Mountain Time offset from UTC (MST = -7, MDT = -6)
+// We'll calculate slots in MT by working with UTC and adjusting
+function getMountainTimeOffset(date: Date): number {
+  // Check if date is in DST (second Sunday in March to first Sunday in November)
+  const year = date.getUTCFullYear();
+  const marchSecondSunday = new Date(Date.UTC(year, 2, 8 + (7 - new Date(Date.UTC(year, 2, 1)).getUTCDay()) % 7));
+  const novFirstSunday = new Date(Date.UTC(year, 10, 1 + (7 - new Date(Date.UTC(year, 10, 1)).getUTCDay()) % 7));
+  
+  if (date >= marchSecondSunday && date < novFirstSunday) {
+    return -6; // MDT
+  }
+  return -7; // MST
+}
+
+function createMountainTimeDate(year: number, month: number, day: number, hour: number, minute: number): Date {
+  // Create a date in Mountain Time by calculating the UTC equivalent
+  const tempDate = new Date(Date.UTC(year, month, day, hour, minute, 0, 0));
+  const offset = getMountainTimeOffset(tempDate);
+  // Subtract offset to convert MT to UTC (e.g., 8am MT = 8am - (-7) = 15:00 UTC in MST)
+  return new Date(Date.UTC(year, month, day, hour - offset, minute, 0, 0));
+}
+
 export async function getAvailability(nextDays = 14): Promise<AvailabilityResponse> {
   const auth = await getOAuthClient();
   const calendar = google.calendar({ version: 'v3', auth });
@@ -147,28 +169,34 @@ export async function getAvailability(nextDays = 14): Promise<AvailabilityRespon
   const slotsByDay: Record<string, AvailabilitySlot[]> = {};
 
   for (let dayOffset = 0; dayOffset < nextDays; dayOffset += 1) {
-    const day = new Date(now);
-    day.setHours(0, 0, 0, 0);
-    day.setDate(day.getDate() + dayOffset);
-
-    const weekday = day.getDay();
+    // Get the date in Mountain Time
+    const nowMT = new Date(now.getTime());
+    const mtOffset = getMountainTimeOffset(nowMT);
+    const dayStart = new Date(now);
+    dayStart.setDate(dayStart.getDate() + dayOffset);
+    
+    // Get year/month/day in Mountain Time
+    const mtDate = new Date(dayStart.getTime() + mtOffset * 60 * 60 * 1000);
+    const year = mtDate.getUTCFullYear();
+    const month = mtDate.getUTCMonth();
+    const dayOfMonth = mtDate.getUTCDate();
+    
+    // Check weekday (need to check in MT)
+    const checkDate = createMountainTimeDate(year, month, dayOfMonth, 12, 0);
+    const weekday = new Date(checkDate.getTime() + mtOffset * 60 * 60 * 1000).getUTCDay();
     if (weekday === 0 || weekday === 6) continue; // Skip weekends
 
-    // Generate slots from 8:15am to 5:45pm (last slot ends at 6pm)
+    // Generate slots from 8:15am to 5:45pm MT (last slot ends at 6pm)
     for (let hour = BUSINESS_START_HOUR; hour < BUSINESS_END_HOUR; hour += 1) {
       for (let minute = 0; minute < 60; minute += 15) {
         // Skip slots before 8:15am
         if (hour === BUSINESS_START_HOUR && minute < BUSINESS_START_MINUTE) continue;
         
-        const slotStart = new Date(day);
-        slotStart.setHours(hour, minute, 0, 0);
+        const slotStart = createMountainTimeDate(year, month, dayOfMonth, hour, minute);
         if (slotStart <= now) continue;
 
         const slotEnd = new Date(slotStart);
         slotEnd.setMinutes(slotEnd.getMinutes() + 15);
-        
-        // Don't allow slots that end after 6pm
-        if (slotEnd.getHours() >= BUSINESS_END_HOUR && slotEnd.getMinutes() > 0) continue;
 
         // Check against buffered busy blocks
         const isBusy = bufferedBusyBlocks.some((block) => {
